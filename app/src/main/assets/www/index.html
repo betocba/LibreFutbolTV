@@ -482,15 +482,27 @@
   setInterval(updateClock, 10000);
 
   // ── Stream URL decoding ───────────────────────────────────────────────────
-  // Resolve a stream link href to a full absolute URL.
+  // Resolve a stream link href to the direct stream URL.
   // Stream links on the agenda page are relative query strings like ?r=BASE64,
-  // which must be resolved against the /eventos/ path (not /agenda/) so they
-  // become https://librefutboltv.su/home1/eventos/?r=BASE64.
+  // where BASE64 decodes to the actual stream URL (e.g. https://latamvidz1.com/...).
+  // We decode it here so the WebView navigates directly to the stream player
+  // rather than loading the eventos iframe wrapper, enabling autoplay injection.
   const EVENTOS_BASE = 'https://librefutboltv.su/home1/eventos/';
   function resolveStreamUrl(href) {
     if (!href) return null;
     try {
-      return new URL(href, EVENTOS_BASE).toString();
+      const url = new URL(href, EVENTOS_BASE);
+      const r = url.searchParams.get('r');
+      if (r) {
+        try {
+          const decoded = atob(r);
+          // Validate it looks like a URL
+          if (decoded.startsWith('http')) return decoded;
+        } catch (e) {
+          // Not valid base64 — fall through to full URL
+        }
+      }
+      return url.toString();
     } catch (e) {
       return href;
     }

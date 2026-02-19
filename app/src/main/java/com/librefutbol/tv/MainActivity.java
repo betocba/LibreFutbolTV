@@ -18,7 +18,9 @@ import android.webkit.WebViewClient;
 
 import java.io.ByteArrayInputStream;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class MainActivity extends Activity {
@@ -66,6 +68,44 @@ public class MainActivity extends Activity {
     private static final WebResourceResponse EMPTY =
         new WebResourceResponse("text/plain", "utf-8",
             new ByteArrayInputStream(new byte[0]));
+
+    // Injected on external stream pages to autoplay the video
+    private static final String AUTOPLAY_JS =
+        "(function(){"
+        + "function tryPlay(){"
+        // Play all HTML5 video elements; try unmuted first, fall back to muted
+        + "  document.querySelectorAll('video').forEach(function(v){"
+        + "    try{v.muted=false;v.play();}catch(e){try{v.muted=true;v.play();}catch(e2){}}"
+        + "  });"
+        // JWPlayer API
+        + "  try{if(typeof jwplayer==='function'){var p=jwplayer();"
+        + "    if(p&&p.getState&&p.getState()!=='playing')p.play();}}catch(e){}"
+        // VideoJS API
+        + "  try{if(typeof videojs==='function'){"
+        + "    document.querySelectorAll('.video-js').forEach(function(el){"
+        + "      try{videojs(el).play();}catch(e){}});"
+        + "  }}catch(e){}"
+        // Click common overlay play buttons
+        + "  ['.jw-icon-playback',\"[aria-label='Play']\",\".fp-play\","
+        + "   '.plyr__control--overlaid','.vjs-big-play-button',"
+        + "   'button[title=Play]','.play-button'].forEach(function(s){"
+        + "    var b=document.querySelector(s);if(b)try{b.click();}catch(e){}"
+        + "  });"
+        + "}"
+        + "tryPlay();"
+        + "setTimeout(tryPlay,1000);"
+        + "setTimeout(tryPlay,3000);"
+        + "setTimeout(tryPlay,6000);"
+        // Watch for video elements added dynamically (lazy-loaded players)
+        + "new MutationObserver(function(ms){"
+        + "  var found=ms.some(function(m){"
+        + "    return[].slice.call(m.addedNodes).some(function(n){"
+        + "      return n.nodeType===1&&(n.tagName==='VIDEO'||!!n.querySelector('video'));"
+        + "    });"
+        + "  });"
+        + "  if(found)setTimeout(tryPlay,300);"
+        + "}).observe(document.documentElement,{childList:true,subtree:true});"
+        + "})();";
 
     // Injected into every page after load
     // Removes invisible click-hijack overlays and kills window.open
@@ -183,15 +223,33 @@ public class MainActivity extends Activity {
                 }
 
                 android.util.Log.d("LibreFutbol", "NAV → " + target.toString());
-                view.loadUrl(target.toString());
+                if (onHomePage) {
+                    // Navigation from home = user picked a stream.
+                    // Add Referer so stream servers (which check it) accept the request.
+                    Map<String, String> headers = new HashMap<>();
+                    headers.put("Referer", "https://librefutboltv.su/");
+                    view.loadUrl(target.toString(), headers);
+                } else {
+                    view.loadUrl(target.toString());
+                }
                 return true;
             }
 
-            // ── 3. Inject JS ad-killer after every page load ──────────────
+            // ── 3. Inject JS after every page load ────────────────────────
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
+                // Ad-killer on every page
                 view.evaluateJavascript(INJECT_JS, null);
+                // Autoplay on external stream pages (not home, not agenda site)
+                if (url != null && !url.startsWith("file:///")) {
+                    String host = getHost(url);
+                    boolean isAgendaSite = host != null
+                            && host.contains("librefutboltv.su");
+                    if (!isAgendaSite) {
+                        view.evaluateJavascript(AUTOPLAY_JS, null);
+                    }
+                }
             }
         });
 
