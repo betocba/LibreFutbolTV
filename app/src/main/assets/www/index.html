@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280">
+<title>LibreFútbol TV</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;600;700&family=Barlow+Condensed:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #00e676;
+    --green-dim: #00c853;
+    --red: #ff1744;
+    --bg: #080c08;
+    --surface: #0f160f;
+    --card: #141e14;
+    --card-hover: #1a281a;
+    --border: #1e2e1e;
+    --text: #e8f5e9;
+    --muted: #6a8f6a;
+    --live-pulse: #ff1744;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Pitch texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 60px,
+        rgba(0,230,118,0.018) 60px,
+        rgba(0,230,118,0.018) 61px
+      );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 60px 22px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(0,230,118,0.04) 0%, transparent 100%);
+  }
+
+  .logo {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .logo-main {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 42px;
+    letter-spacing: 3px;
+    color: var(--green);
+    text-shadow: 0 0 40px rgba(0,230,118,0.4);
+  }
+
+  .logo-sub {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    letter-spacing: 6px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+  }
+
+  .clock {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 22px;
+    color: var(--muted);
+    letter-spacing: 2px;
+  }
+
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,23,68,0.12);
+    border: 1px solid rgba(255,23,68,0.3);
+    border-radius: 4px;
+    padding: 6px 14px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: var(--red);
+    text-transform: uppercase;
+  }
+
+  .live-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--red);
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  /* ── NAV TABS ── */
+  nav {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    gap: 0;
+    padding: 0 60px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-tab {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 15px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 18px 28px;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .nav-tab.active {
+    color: var(--green);
+    border-bottom-color: var(--green);
+  }
+
+  .nav-tab:hover, .nav-tab:focus {
+    color: var(--text);
+    outline: none;
+  }
+
+  /* ── MAIN ── */
+  main {
+    position: relative;
+    z-index: 5;
+    padding: 40px 60px 60px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 28px;
+  }
+
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 3px;
+    color: var(--text);
+  }
+
+  .section-count {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    background: var(--border);
+    padding: 4px 10px;
+    border-radius: 3px;
+  }
+
+  /* ── FEATURED MATCH (hero) ── */
+  .hero-match {
+    position: relative;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 40px 50px;
+    margin-bottom: 48px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.15s;
+  }
+
+  .hero-match::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--green), transparent);
+  }
+
+  .hero-match::after {
+    content: 'FEATURED';
+    position: absolute;
+    top: 18px; right: 24px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--green);
+    opacity: 0.6;
+  }
+
+  .hero-match:focus, .hero-match.focused {
+    outline: none;
+    border-color: var(--green);
+    transform: scale(1.005);
+    box-shadow: 0 0 0 1px var(--green), 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  .hero-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .hero-meta {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  .hero-teams {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    flex: 1;
+  }
+
+  .team {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    min-width: 140px;
+  }
+
+  .team-crest {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    border: 2px solid var(--border);
+    background: var(--surface);
+  }
+
+  .team-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    letter-spacing: 2px;
+    text-align: center;
+  }
+
+  .vs-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .vs-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 3px;
+  }
+
+  .score-or-time {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px;
+    letter-spacing: 4px;
+    color: var(--green);
+    line-height: 1;
+    text-shadow: 0 0 30px rgba(0,230,118,0.35);
+  }
+
+  .match-minute {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    color: var(--red);
+    letter-spacing: 2px;
+  }
+
+  .hero-side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 14px;
+    min-width: 200px;
+  }
+
+  .stream-count {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 2px;
+  }
+
+  .watch-btn {
+    background: var(--green);
+    color: #000;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    padding: 14px 32px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+  }
+
+  .watch-btn:hover { background: #00ff88; transform: scale(1.03); }
+
+  /* ── GAME GRID ── */
+  .games-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .game-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 24px;
+    cursor: pointer;
+    transition: all 0.18s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .game-card:focus, .game-card.focused {
+    outline: none;
+    border-color: var(--green);
+    background: var(--card-hover);
+    transform: scale(1.02);
+    box-shadow: 0 0 0 1px var(--green), 0 16px 40px rgba(0,0,0,0.6);
+    z-index: 2;
+  }
+
+  .game-card .live-indicator {
+    position: absolute;
+    top: 14px; right: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--red);
+  }
+
+  .game-card .live-indicator .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--red);
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+
+  .card-league {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .card-teams {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .card-team {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 1.5px;
+    max-width: 110px;
+  }
+
+  .card-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 4px;
+    color: var(--green);
+  }
+
+  .card-upcoming .card-score {
+    font-size: 16px;
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 2px;
+    color: var(--muted);
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-streams {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  .card-minute {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    color: var(--red);
+    letter-spacing: 1px;
+  }
+
+  /* ── UPCOMING ROW ── */
+  .upcoming-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 40px;
+  }
+
+  .upcoming-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .upcoming-item {
+    display: flex;
+    align-items: center;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 16px 24px;
+    cursor: pointer;
+    transition: all 0.18s;
+    gap: 24px;
+  }
+
+  .upcoming-item:focus, .upcoming-item.focused {
+    outline: none;
+    border-color: var(--green);
+    background: var(--card-hover);
+    box-shadow: 0 0 0 1px var(--green);
+  }
+
+  .upcoming-time {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    color: var(--green);
+    letter-spacing: 2px;
+    min-width: 70px;
+  }
+
+  .upcoming-league {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    min-width: 160px;
+    text-transform: uppercase;
+  }
+
+  .upcoming-teams {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    flex: 1;
+  }
+
+  .upcoming-reminder {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 5px 12px;
+    border-radius: 3px;
+    text-transform: uppercase;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    position: relative;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 60px;
+    border-top: 1px solid var(--border);
+    margin-top: 20px;
+  }
+
+  .footer-hint {
+    display: flex;
+    gap: 28px;
+  }
+
+  .hint-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  .key {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    color: var(--text);
+    letter-spacing: 1px;
+  }
+
+  .footer-source {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    opacity: 0.5;
+  }
+
+  /* focus ring for keyboard nav */
+  .focusable { outline: none; }
+
+  /* loading shimmer */
+  @keyframes shimmer {
+    0% { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="logo-main">LibreFútbol</span>
+    <span class="logo-sub">TV</span>
+  </div>
+  <div class="header-right">
+    <div class="clock" id="clock">00:00</div>
+    <div class="live-badge"><span class="live-dot"></span>Live Now</div>
+  </div>
+</header>
+
+<nav>
+  <div class="nav-tab active focusable" tabindex="0">⚽ Live</div>
+  <div class="nav-tab focusable" tabindex="0">📅 Today</div>
+  <div class="nav-tab focusable" tabindex="0">🔍 Search</div>
+  <div class="nav-tab focusable" tabindex="0">⚙ Settings</div>
+</nav>
+
+<main>
+
+  <!-- Hero Featured Match -->
+  <div class="hero-match focusable" tabindex="0">
+    <div class="hero-meta">🏆 UEFA Champions League · Round of 16</div>
+    <div class="hero-inner">
+      <div class="hero-teams">
+        <div class="team">
+          <div class="team-crest">🦅</div>
+          <div class="team-name">Benfica</div>
+        </div>
+        <div class="vs-block">
+          <div class="vs-text">SCORE</div>
+          <div class="score-or-time">2 – 1</div>
+          <div class="match-minute">● 67'</div>
+        </div>
+        <div class="team">
+          <div class="team-crest">🦁</div>
+          <div class="team-name">Inter</div>
+        </div>
+      </div>
+      <div class="hero-side">
+        <div class="stream-count">8 streams available</div>
+        <button class="watch-btn">▶ Watch Now</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Games Section -->
+  <div class="section-header">
+    <div class="section-title">Live Matches</div>
+    <div class="section-count">6 Live</div>
+  </div>
+
+  <div class="games-grid">
+
+    <div class="game-card focusable" tabindex="0">
+      <div class="live-indicator"><span class="dot"></span>LIVE · 34'</div>
+      <div class="card-league">La Liga · Matchday 27</div>
+      <div class="card-teams">
+        <div class="card-team">Real Madrid</div>
+        <div class="card-score">1 – 0</div>
+        <div class="card-team">Atlético</div>
+      </div>
+      <div class="card-footer">
+        <div class="card-streams">5 streams</div>
+        <div class="card-minute">● 34'</div>
+      </div>
+    </div>
+
+    <div class="game-card focusable" tabindex="0">
+      <div class="live-indicator"><span class="dot"></span>LIVE · 71'</div>
+      <div class="card-league">Premier League · Matchday 29</div>
+      <div class="card-teams">
+        <div class="card-team">Arsenal</div>
+        <div class="card-score">3 – 1</div>
+        <div class="card-team">Chelsea</div>
+      </div>
+      <div class="card-footer">
+        <div class="card-streams">12 streams</div>
+        <div class="card-minute">● 71'</div>
+      </div>
+    </div>
+
+    <div class="game-card focusable" tabindex="0">
+      <div class="live-indicator"><span class="dot"></span>LIVE · HT</div>
+      <div class="card-league">Serie A · Matchday 28</div>
+      <div class="card-teams">
+        <div class="card-team">Juventus</div>
+        <div class="card-score">0 – 0</div>
+        <div class="card-team">Napoli</div>
+      </div>
+      <div class="card-footer">
+        <div class="card-streams">7 streams</div>
+        <div class="card-minute">HT</div>
+      </div>
+    </div>
+
+    <div class="game-card focusable" tabindex="0">
+      <div class="live-indicator"><span class="dot"></span>LIVE · 55'</div>
+      <div class="card-league">Bundesliga · Matchday 26</div>
+      <div class="card-teams">
+        <div class="card-team">Bayern</div>
+        <div class="card-score">4 – 2</div>
+        <div class="card-team">Dortmund</div>
+      </div>
+      <div class="card-footer">
+        <div class="card-streams">9 streams</div>
+        <div class="card-minute">● 55'</div>
+      </div>
+    </div>
+
+    <div class="game-card focusable" tabindex="0">
+      <div class="live-indicator"><span class="dot"></span>LIVE · 12'</div>
+      <div class="card-league">Ligue 1 · Matchday 27</div>
+      <div class="card-teams">
+        <div class="card-team">PSG</div>
+        <div class="card-score">1 – 1</div>
+        <div class="card-team">Lyon</div>
+      </div>
+      <div class="card-footer">
+        <div class="card-streams">4 streams</div>
+        <div class="card-minute">● 12'</div>
+      </div>
+    </div>
+
+    <div class="game-card focusable" tabindex="0">
+      <div class="live-indicator"><span class="dot"></span>LIVE · 88'</div>
+      <div class="card-league">MLS · Week 4</div>
+      <div class="card-teams">
+        <div class="card-team">Inter Miami</div>
+        <div class="card-score">2 – 3</div>
+        <div class="card-team">LAFC</div>
+      </div>
+      <div class="card-footer">
+        <div class="card-streams">3 streams</div>
+        <div class="card-minute">● 88'</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Upcoming Matches -->
+  <div class="upcoming-list">
+    <div class="upcoming-title">Coming Up Today</div>
+
+    <div class="upcoming-item focusable" tabindex="0">
+      <div class="upcoming-time">21:00</div>
+      <div class="upcoming-league">Champions League</div>
+      <div class="upcoming-teams">Manchester City vs Real Madrid</div>
+      <div class="upcoming-reminder">+ Remind</div>
+    </div>
+
+    <div class="upcoming-item focusable" tabindex="0">
+      <div class="upcoming-time">21:45</div>
+      <div class="upcoming-league">Europa League</div>
+      <div class="upcoming-teams">Roma vs Porto</div>
+      <div class="upcoming-reminder">+ Remind</div>
+    </div>
+
+    <div class="upcoming-item focusable" tabindex="0">
+      <div class="upcoming-time">23:00</div>
+      <div class="upcoming-league">Copa Libertadores</div>
+      <div class="upcoming-teams">Boca Juniors vs Flamengo</div>
+      <div class="upcoming-reminder">+ Remind</div>
+    </div>
+
+  </div>
+
+</main>
+
+<footer>
+  <div class="footer-hint">
+    <div class="hint-item"><span class="key">D-PAD</span> Navigate</div>
+    <div class="hint-item"><span class="key">OK</span> Select / Watch</div>
+    <div class="hint-item"><span class="key">BACK</span> Go Back</div>
+    <div class="hint-item"><span class="key">☰ MENU</span> Options</div>
+  </div>
+  <div class="footer-source">librefutboltv.su</div>
+</footer>
+
+<script>
+  // Clock
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').textContent =
+      now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  }
+  updateClock();
+  setInterval(updateClock, 10000);
+
+  // D-pad / keyboard navigation
+  const focusables = () => [...document.querySelectorAll('.focusable')];
+
+  document.addEventListener('keydown', (e) => {
+    const items = focusables();
+    const current = document.activeElement;
+    const idx = items.indexOf(current);
+
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      const next = items[idx + 1] || items[0];
+      next.focus();
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prev = items[idx - 1] || items[items.length - 1];
+      prev.focus();
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      current.click();
+      if (current.classList.contains('nav-tab')) {
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        current.classList.add('active');
+      }
+    }
+  });
+
+  // Auto-focus first element
+  focusables()[0].focus();
+
+  // Card click feedback
+  document.querySelectorAll('.game-card, .hero-match, .upcoming-item').forEach(card => {
+    card.addEventListener('click', () => {
+      card.style.transition = 'background 0.1s';
+      card.style.background = 'rgba(0,230,118,0.08)';
+      setTimeout(() => card.style.background = '', 300);
+    });
+  });
+</script>
+
+</body>
+</html>
