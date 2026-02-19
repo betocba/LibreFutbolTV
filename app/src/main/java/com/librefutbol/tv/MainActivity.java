@@ -163,13 +163,18 @@ public class MainActivity extends Activity {
                 boolean onHomePage = currentUrl == null
                         || currentUrl.startsWith("file:///");
 
-                if (!onHomePage) {
+                // librefutboltv.su is the agenda/eventos site — it legitimately
+                // redirects to external stream domains, so never lock it down.
+                String currentHost = getHost(currentUrl);
+                boolean onAgendaSite = currentHost != null
+                        && currentHost.contains("librefutboltv.su");
+
+                if (!onHomePage && !onAgendaSite) {
                     // ── Stream-page lockdown ─────────────────────────────
-                    // While watching a stream, any navigation that leaves
-                    // the current domain is almost certainly an ad redirect.
+                    // While watching an external stream, any navigation that
+                    // leaves the current domain is almost certainly an ad.
                     // Block it. The user can return home via the Back button.
-                    String currentHost = getHost(currentUrl);
-                    String targetHost  = target.getHost();
+                    String targetHost = target.getHost();
 
                     if (currentHost != null && targetHost != null
                             && !isSameDomain(currentHost, targetHost)) {
@@ -177,6 +182,7 @@ public class MainActivity extends Activity {
                     }
                 }
 
+                android.util.Log.d("LibreFutbol", "NAV → " + target.toString());
                 view.loadUrl(target.toString());
                 return true;
             }

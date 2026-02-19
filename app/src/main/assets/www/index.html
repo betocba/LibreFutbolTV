@@ -482,21 +482,15 @@
   setInterval(updateClock, 10000);
 
   // ── Stream URL decoding ───────────────────────────────────────────────────
-  // Links on the agenda page use base64-encoded redirect URLs, e.g.:
-  //   /eventos/?r=aHR0cHM6Ly8...  → decodes to the actual stream URL
-  function decodeStreamUrl(href) {
+  // Resolve a stream link href to a full absolute URL.
+  // Stream links on the agenda page are relative query strings like ?r=BASE64,
+  // which must be resolved against the /eventos/ path (not /agenda/) so they
+  // become https://librefutboltv.su/home1/eventos/?r=BASE64.
+  const EVENTOS_BASE = 'https://librefutboltv.su/home1/eventos/';
+  function resolveStreamUrl(href) {
     if (!href) return null;
     try {
-      const url = new URL(href, AGENDA_URL);
-      for (const [, val] of url.searchParams) {
-        try {
-          const decoded = atob(val);
-          if (decoded.startsWith('http')) return decoded;
-        } catch (e) { /* not base64 */ }
-      }
-      // Not encoded — return as-is if external
-      if (!href.includes('librefutboltv.su') && href.startsWith('http')) return href;
-      return url.toString();
+      return new URL(href, EVENTOS_BASE).toString();
     } catch (e) {
       return href;
     }
@@ -527,17 +521,17 @@
     const home = parts[0]?.trim() || matchup;
     const away = parts[1]?.trim() || '';
 
-    // Stream links live in the nested <ul>
-    const streamLinks = [...li.querySelectorAll('ul li a')];
+    // Stream links are child ul li a elements that have a real href (not "#").
+    // child[0] is typically the match title pseudo-link with href="#"; skip it.
+    const streamLinks = [...li.querySelectorAll('ul li a')]
+      .filter(a => { const h = a.getAttribute('href'); return h && h !== '#'; });
+
     if (streamLinks.length === 0) return null;
 
-    const firstHref = streamLinks[0].getAttribute('href');
-    const streamUrl = decodeStreamUrl(firstHref);
+    const streamUrl = resolveStreamUrl(streamLinks[0].getAttribute('href'));
     if (!streamUrl) return null;
 
-    const streamName = streamLinks[0].textContent.trim();
-
-    return { league, home, away, time, streamUrl, streamName, streamCount: streamLinks.length };
+    return { league, home, away, time, streamUrl, streamCount: streamLinks.length };
   }
 
   // ── Determine if a game is currently live based on its kickoff time ───────
@@ -610,9 +604,8 @@
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, 'text/html');
 
-      const games = [...doc.querySelectorAll('.menu > li')]
-        .map(parseGame)
-        .filter(Boolean);
+      const items = [...doc.querySelectorAll('.menu > li')];
+      const games = items.map(parseGame).filter(Boolean);
 
       if (games.length === 0) throw new Error('No games parsed');
 
