@@ -185,155 +185,6 @@
     border-radius: 3px;
   }
 
-  /* ── FEATURED MATCH (hero) ── */
-  .hero-match {
-    position: relative;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 40px 50px;
-    margin-bottom: 48px;
-    overflow: hidden;
-    cursor: pointer;
-    transition: border-color 0.2s, transform 0.15s;
-  }
-
-  .hero-match::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--green), transparent);
-  }
-
-  .hero-match::after {
-    content: 'FEATURED';
-    position: absolute;
-    top: 18px; right: 24px;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 11px;
-    letter-spacing: 4px;
-    color: var(--green);
-    opacity: 0.6;
-  }
-
-  .hero-match:focus, .hero-match.focused {
-    outline: none;
-    border-color: var(--green);
-    transform: scale(1.005);
-    box-shadow: 0 0 0 1px var(--green), 0 20px 60px rgba(0,0,0,0.5);
-  }
-
-  .hero-inner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .hero-meta {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 13px;
-    letter-spacing: 3px;
-    color: var(--muted);
-    text-transform: uppercase;
-    margin-bottom: 24px;
-  }
-
-  .hero-teams {
-    display: flex;
-    align-items: center;
-    gap: 40px;
-    flex: 1;
-  }
-
-  .team {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    min-width: 140px;
-  }
-
-  .team-crest {
-    width: 72px; height: 72px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 32px;
-    border: 2px solid var(--border);
-    background: var(--surface);
-  }
-
-  .team-name {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 26px;
-    letter-spacing: 2px;
-    text-align: center;
-  }
-
-  .vs-block {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .vs-text {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 13px;
-    color: var(--muted);
-    letter-spacing: 3px;
-  }
-
-  .score-or-time {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 52px;
-    letter-spacing: 4px;
-    color: var(--green);
-    line-height: 1;
-    text-shadow: 0 0 30px rgba(0,230,118,0.35);
-  }
-
-  .match-minute {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 14px;
-    color: var(--red);
-    letter-spacing: 2px;
-  }
-
-  .hero-side {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 14px;
-    min-width: 200px;
-  }
-
-  .stream-count {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 13px;
-    color: var(--muted);
-    letter-spacing: 2px;
-  }
-
-  .watch-btn {
-    background: var(--green);
-    color: #000;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    padding: 14px 32px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background 0.15s, transform 0.1s;
-  }
-
-  .watch-btn:hover { background: #00ff88; transform: scale(1.03); }
-
   /* ── GAME GRID ── */
   .games-grid {
     display: grid;
@@ -410,9 +261,9 @@
     color: var(--green);
   }
 
-  .card-upcoming .card-score {
-    font-size: 16px;
+  .card-time {
     font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
     letter-spacing: 2px;
     color: var(--muted);
   }
@@ -430,81 +281,94 @@
     letter-spacing: 1px;
   }
 
-  .card-minute {
+  .watch-btn {
+    background: var(--green);
+    color: #000;
     font-family: 'Barlow Condensed', sans-serif;
-    font-size: 12px;
-    color: var(--red);
-    letter-spacing: 1px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
   }
 
-  /* ── UPCOMING ROW ── */
-  .upcoming-list {
+  .watch-btn:hover { background: #00ff88; transform: scale(1.03); }
+
+  /* ── LOADING ── */
+  .loading-state {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    margin-top: 40px;
-  }
-
-  .upcoming-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 22px;
-    letter-spacing: 3px;
-    color: var(--muted);
-    margin-bottom: 14px;
-  }
-
-  .upcoming-item {
-    display: flex;
     align-items: center;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 5px;
-    padding: 16px 24px;
-    cursor: pointer;
-    transition: all 0.18s;
-    gap: 24px;
+    justify-content: center;
+    min-height: 300px;
+    gap: 20px;
   }
 
-  .upcoming-item:focus, .upcoming-item.focused {
-    outline: none;
-    border-color: var(--green);
-    background: var(--card-hover);
-    box-shadow: 0 0 0 1px var(--green);
+  .loading-spinner {
+    width: 40px; height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--green);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
   }
 
-  .upcoming-time {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 18px;
-    color: var(--green);
-    letter-spacing: 2px;
-    min-width: 70px;
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 
-  .upcoming-league {
+  .loading-text {
     font-family: 'Barlow Condensed', sans-serif;
-    font-size: 11px;
+    font-size: 16px;
+    letter-spacing: 4px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  /* ── ERROR ── */
+  .error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    gap: 16px;
+  }
+
+  .error-icon {
+    font-size: 48px;
+    opacity: 0.4;
+  }
+
+  .error-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px;
     letter-spacing: 3px;
     color: var(--muted);
-    min-width: 160px;
     text-transform: uppercase;
   }
 
-  .upcoming-teams {
+  .retry-btn {
+    background: transparent;
+    color: var(--green);
     font-family: 'Barlow Condensed', sans-serif;
-    font-size: 18px;
-    font-weight: 600;
-    flex: 1;
+    font-size: 14px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 10px 24px;
+    border: 1px solid var(--green);
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: background 0.15s;
   }
 
-  .upcoming-reminder {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 12px;
-    letter-spacing: 2px;
-    color: var(--muted);
-    border: 1px solid var(--border);
-    padding: 5px 12px;
-    border-radius: 3px;
-    text-transform: uppercase;
+  .retry-btn:focus, .retry-btn:hover {
+    outline: none;
+    background: rgba(0,230,118,0.1);
   }
 
   /* ── FOOTER ── */
@@ -553,14 +417,7 @@
     opacity: 0.5;
   }
 
-  /* focus ring for keyboard nav */
   .focusable { outline: none; }
-
-  /* loading shimmer */
-  @keyframes shimmer {
-    0% { background-position: -400px 0; }
-    100% { background-position: 400px 0; }
-  }
 </style>
 </head>
 <body>
@@ -577,159 +434,28 @@
 </header>
 
 <nav>
-  <div class="nav-tab active focusable" tabindex="0">⚽ Live</div>
-  <div class="nav-tab focusable" tabindex="0">📅 Today</div>
-  <div class="nav-tab focusable" tabindex="0">🔍 Search</div>
-  <div class="nav-tab focusable" tabindex="0">⚙ Settings</div>
+  <div class="nav-tab active focusable" tabindex="0">⚽ Today</div>
 </nav>
 
 <main>
 
-  <!-- Hero Featured Match -->
-  <div class="hero-match focusable" tabindex="0">
-    <div class="hero-meta">🏆 UEFA Champions League · Round of 16</div>
-    <div class="hero-inner">
-      <div class="hero-teams">
-        <div class="team">
-          <div class="team-crest">🦅</div>
-          <div class="team-name">Benfica</div>
-        </div>
-        <div class="vs-block">
-          <div class="vs-text">SCORE</div>
-          <div class="score-or-time">2 – 1</div>
-          <div class="match-minute">● 67'</div>
-        </div>
-        <div class="team">
-          <div class="team-crest">🦁</div>
-          <div class="team-name">Inter</div>
-        </div>
-      </div>
-      <div class="hero-side">
-        <div class="stream-count">8 streams available</div>
-        <button class="watch-btn">▶ Watch Now</button>
-      </div>
-    </div>
+  <div id="loading-state" class="loading-state">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Loading today's agenda...</div>
   </div>
 
-  <!-- Live Games Section -->
-  <div class="section-header">
-    <div class="section-title">Live Matches</div>
-    <div class="section-count">6 Live</div>
+  <div id="content" style="display:none">
+    <div class="section-header">
+      <div class="section-title">Today's Games</div>
+      <div class="section-count" id="game-count">—</div>
+    </div>
+    <div class="games-grid" id="games-grid"></div>
   </div>
 
-  <div class="games-grid">
-
-    <div class="game-card focusable" tabindex="0">
-      <div class="live-indicator"><span class="dot"></span>LIVE · 34'</div>
-      <div class="card-league">La Liga · Matchday 27</div>
-      <div class="card-teams">
-        <div class="card-team">Real Madrid</div>
-        <div class="card-score">1 – 0</div>
-        <div class="card-team">Atlético</div>
-      </div>
-      <div class="card-footer">
-        <div class="card-streams">5 streams</div>
-        <div class="card-minute">● 34'</div>
-      </div>
-    </div>
-
-    <div class="game-card focusable" tabindex="0">
-      <div class="live-indicator"><span class="dot"></span>LIVE · 71'</div>
-      <div class="card-league">Premier League · Matchday 29</div>
-      <div class="card-teams">
-        <div class="card-team">Arsenal</div>
-        <div class="card-score">3 – 1</div>
-        <div class="card-team">Chelsea</div>
-      </div>
-      <div class="card-footer">
-        <div class="card-streams">12 streams</div>
-        <div class="card-minute">● 71'</div>
-      </div>
-    </div>
-
-    <div class="game-card focusable" tabindex="0">
-      <div class="live-indicator"><span class="dot"></span>LIVE · HT</div>
-      <div class="card-league">Serie A · Matchday 28</div>
-      <div class="card-teams">
-        <div class="card-team">Juventus</div>
-        <div class="card-score">0 – 0</div>
-        <div class="card-team">Napoli</div>
-      </div>
-      <div class="card-footer">
-        <div class="card-streams">7 streams</div>
-        <div class="card-minute">HT</div>
-      </div>
-    </div>
-
-    <div class="game-card focusable" tabindex="0">
-      <div class="live-indicator"><span class="dot"></span>LIVE · 55'</div>
-      <div class="card-league">Bundesliga · Matchday 26</div>
-      <div class="card-teams">
-        <div class="card-team">Bayern</div>
-        <div class="card-score">4 – 2</div>
-        <div class="card-team">Dortmund</div>
-      </div>
-      <div class="card-footer">
-        <div class="card-streams">9 streams</div>
-        <div class="card-minute">● 55'</div>
-      </div>
-    </div>
-
-    <div class="game-card focusable" tabindex="0">
-      <div class="live-indicator"><span class="dot"></span>LIVE · 12'</div>
-      <div class="card-league">Ligue 1 · Matchday 27</div>
-      <div class="card-teams">
-        <div class="card-team">PSG</div>
-        <div class="card-score">1 – 1</div>
-        <div class="card-team">Lyon</div>
-      </div>
-      <div class="card-footer">
-        <div class="card-streams">4 streams</div>
-        <div class="card-minute">● 12'</div>
-      </div>
-    </div>
-
-    <div class="game-card focusable" tabindex="0">
-      <div class="live-indicator"><span class="dot"></span>LIVE · 88'</div>
-      <div class="card-league">MLS · Week 4</div>
-      <div class="card-teams">
-        <div class="card-team">Inter Miami</div>
-        <div class="card-score">2 – 3</div>
-        <div class="card-team">LAFC</div>
-      </div>
-      <div class="card-footer">
-        <div class="card-streams">3 streams</div>
-        <div class="card-minute">● 88'</div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- Upcoming Matches -->
-  <div class="upcoming-list">
-    <div class="upcoming-title">Coming Up Today</div>
-
-    <div class="upcoming-item focusable" tabindex="0">
-      <div class="upcoming-time">21:00</div>
-      <div class="upcoming-league">Champions League</div>
-      <div class="upcoming-teams">Manchester City vs Real Madrid</div>
-      <div class="upcoming-reminder">+ Remind</div>
-    </div>
-
-    <div class="upcoming-item focusable" tabindex="0">
-      <div class="upcoming-time">21:45</div>
-      <div class="upcoming-league">Europa League</div>
-      <div class="upcoming-teams">Roma vs Porto</div>
-      <div class="upcoming-reminder">+ Remind</div>
-    </div>
-
-    <div class="upcoming-item focusable" tabindex="0">
-      <div class="upcoming-time">23:00</div>
-      <div class="upcoming-league">Copa Libertadores</div>
-      <div class="upcoming-teams">Boca Juniors vs Flamengo</div>
-      <div class="upcoming-reminder">+ Remind</div>
-    </div>
-
+  <div id="error-state" class="error-state" style="display:none">
+    <div class="error-icon">⚽</div>
+    <div class="error-text">Could not load agenda</div>
+    <button class="retry-btn focusable" tabindex="0" id="retry-btn">↺ Try Again</button>
   </div>
 
 </main>
@@ -737,15 +463,16 @@
 <footer>
   <div class="footer-hint">
     <div class="hint-item"><span class="key">D-PAD</span> Navigate</div>
-    <div class="hint-item"><span class="key">OK</span> Select / Watch</div>
+    <div class="hint-item"><span class="key">OK</span> Watch</div>
     <div class="hint-item"><span class="key">BACK</span> Go Back</div>
-    <div class="hint-item"><span class="key">☰ MENU</span> Options</div>
   </div>
   <div class="footer-source">librefutboltv.su</div>
 </footer>
 
 <script>
-  // Clock
+  const AGENDA_URL = 'https://librefutboltv.su/home1/agenda/';
+
+  // ── Clock ────────────────────────────────────────────────────────────────
   function updateClock() {
     const now = new Date();
     document.getElementById('clock').textContent =
@@ -754,43 +481,181 @@
   updateClock();
   setInterval(updateClock, 10000);
 
-  // D-pad / keyboard navigation
-  const focusables = () => [...document.querySelectorAll('.focusable')];
+  // ── Stream URL decoding ───────────────────────────────────────────────────
+  // Links on the agenda page use base64-encoded redirect URLs, e.g.:
+  //   /eventos/?r=aHR0cHM6Ly8...  → decodes to the actual stream URL
+  function decodeStreamUrl(href) {
+    if (!href) return null;
+    try {
+      const url = new URL(href, AGENDA_URL);
+      for (const [, val] of url.searchParams) {
+        try {
+          const decoded = atob(val);
+          if (decoded.startsWith('http')) return decoded;
+        } catch (e) { /* not base64 */ }
+      }
+      // Not encoded — return as-is if external
+      if (!href.includes('librefutboltv.su') && href.startsWith('http')) return href;
+      return url.toString();
+    } catch (e) {
+      return href;
+    }
+  }
 
-  document.addEventListener('keydown', (e) => {
-    const items = focusables();
-    const current = document.activeElement;
-    const idx = items.indexOf(current);
+  // ── Parse one <li> menu item into a game object ───────────────────────────
+  function parseGame(li) {
+    const titleEl = li.querySelector(':scope > a');
+    if (!titleEl) return null;
 
+    const raw = titleEl.textContent.trim();
+
+    // Extract time (HH:MM)
+    const timeMatch = raw.match(/\b(\d{1,2}:\d{2})\b/);
+    const time = timeMatch ? timeMatch[1] : '';
+    const text = raw.replace(/\b\d{1,2}:\d{2}\b/, '').trim();
+
+    // Split "League: Team A vs Team B"
+    const colonIdx = text.indexOf(':');
+    let league = '';
+    let matchup = text;
+    if (colonIdx > -1) {
+      league = text.substring(0, colonIdx).trim();
+      matchup = text.substring(colonIdx + 1).trim();
+    }
+
+    const parts = matchup.split(/\s+vs\.?\s+/i);
+    const home = parts[0]?.trim() || matchup;
+    const away = parts[1]?.trim() || '';
+
+    // Stream links live in the nested <ul>
+    const streamLinks = [...li.querySelectorAll('ul li a')];
+    if (streamLinks.length === 0) return null;
+
+    const firstHref = streamLinks[0].getAttribute('href');
+    const streamUrl = decodeStreamUrl(firstHref);
+    if (!streamUrl) return null;
+
+    const streamName = streamLinks[0].textContent.trim();
+
+    return { league, home, away, time, streamUrl, streamName, streamCount: streamLinks.length };
+  }
+
+  // ── Determine if a game is currently live based on its kickoff time ───────
+  function isLive(timeStr) {
+    if (!timeStr) return false;
+    const [h, m] = timeStr.split(':').map(Number);
+    const now = new Date();
+    const kickoff = new Date();
+    kickoff.setHours(h, m, 0, 0);
+    const elapsed = now - kickoff;
+    return elapsed >= 0 && elapsed < 130 * 60 * 1000; // within ~2h10m of kickoff
+  }
+
+  // ── Render game tiles ─────────────────────────────────────────────────────
+  function renderGames(games) {
+    const grid = document.getElementById('games-grid');
+    document.getElementById('game-count').textContent =
+      games.length + ' game' + (games.length !== 1 ? 's' : '');
+
+    grid.innerHTML = games.map(g => {
+      const live = isLive(g.time);
+      return `
+        <div class="game-card focusable" tabindex="0" data-url="${encodeURIComponent(g.streamUrl)}">
+          ${live ? '<div class="live-indicator"><span class="dot"></span>LIVE</div>' : ''}
+          <div class="card-league">${escHtml(g.league)}</div>
+          <div class="card-teams">
+            <div class="card-team">${escHtml(g.home)}</div>
+            <div class="card-time">${escHtml(g.time)}</div>
+            <div class="card-team">${escHtml(g.away)}</div>
+          </div>
+          <div class="card-footer">
+            <div class="card-streams">${g.streamCount} stream${g.streamCount !== 1 ? 's' : ''}</div>
+            <button class="watch-btn">▶ Watch Now</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    grid.querySelectorAll('.game-card').forEach(card => {
+      const url = decodeURIComponent(card.dataset.url);
+      const watchNow = () => { if (url) window.location.href = url; };
+      card.addEventListener('click', watchNow);
+      card.querySelector('.watch-btn').addEventListener('click', e => {
+        e.stopPropagation();
+        watchNow();
+      });
+      // Flash feedback
+      card.addEventListener('click', () => {
+        card.style.transition = 'background 0.1s';
+        card.style.background = 'rgba(0,230,118,0.08)';
+        setTimeout(() => { card.style.background = ''; }, 300);
+      });
+    });
+
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+    initFocus();
+  }
+
+  // ── Fetch & parse the agenda page ─────────────────────────────────────────
+  async function loadAgenda() {
+    document.getElementById('loading-state').style.display = 'flex';
+    document.getElementById('content').style.display = 'none';
+    document.getElementById('error-state').style.display = 'none';
+
+    try {
+      const res = await fetch(AGENDA_URL);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const html = await res.text();
+
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+
+      const games = [...doc.querySelectorAll('.menu > li')]
+        .map(parseGame)
+        .filter(Boolean);
+
+      if (games.length === 0) throw new Error('No games parsed');
+
+      renderGames(games);
+    } catch (e) {
+      console.error('Agenda load failed:', e);
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('error-state').style.display = 'flex';
+      initFocus();
+    }
+  }
+
+  // ── D-pad / keyboard navigation ───────────────────────────────────────────
+  function initFocus() {
+    const items = [...document.querySelectorAll('.focusable')];
+    if (items.length > 0) items[0].focus();
+  }
+
+  document.addEventListener('keydown', e => {
+    const items = [...document.querySelectorAll('.focusable')];
+    const idx = items.indexOf(document.activeElement);
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
       e.preventDefault();
-      const next = items[idx + 1] || items[0];
-      next.focus();
+      (items[idx + 1] || items[0]).focus();
     } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
       e.preventDefault();
-      const prev = items[idx - 1] || items[items.length - 1];
-      prev.focus();
+      (items[idx - 1] || items[items.length - 1]).focus();
     } else if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      current.click();
-      if (current.classList.contains('nav-tab')) {
-        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-        current.classList.add('active');
-      }
+      document.activeElement.click();
     }
   });
 
-  // Auto-focus first element
-  focusables()[0].focus();
+  // ── Retry button ──────────────────────────────────────────────────────────
+  document.getElementById('retry-btn').addEventListener('click', loadAgenda);
 
-  // Card click feedback
-  document.querySelectorAll('.game-card, .hero-match, .upcoming-item').forEach(card => {
-    card.addEventListener('click', () => {
-      card.style.transition = 'background 0.1s';
-      card.style.background = 'rgba(0,230,118,0.08)';
-      setTimeout(() => card.style.background = '', 300);
-    });
-  });
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function escHtml(str) {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // ── Boot ──────────────────────────────────────────────────────────────────
+  loadAgenda();
 </script>
 
 </body>
