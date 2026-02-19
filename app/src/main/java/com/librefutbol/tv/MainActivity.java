@@ -346,8 +346,24 @@ public class MainActivity extends Activity {
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
-    @Override protected void onResume() { super.onResume(); webView.onResume(); }
-    @Override protected void onPause()  { super.onPause();  webView.onPause();  }
+    private boolean wasPaused = false;
+
+    @Override protected void onResume() {
+        super.onResume();
+        webView.onResume();
+        if (wasPaused) {
+            wasPaused = false;
+            String url = webView.getUrl();
+            if (url != null && url.startsWith("file:///")) {
+                webView.evaluateJavascript("loadAgenda()", null);
+            }
+        }
+    }
+    @Override protected void onPause() {
+        super.onPause();
+        webView.onPause();
+        wasPaused = true;
+    }
     @Override protected void onDestroy() {
         if (webView != null) webView.destroy();
         super.onDestroy();
