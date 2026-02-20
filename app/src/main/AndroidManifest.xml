@@ -14,8 +14,9 @@
 
     <application
         android:allowBackup="false"
-        android:icon="@drawable/ic_launcher_background"
-        android:label="LibreFútbol TV"
+        android:icon="@mipmap/ic_launcher"
+        android:banner="@drawable/tv_banner"
+        android:label="Aguante Taiereee!"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=1280">
-<title>LibreFútbol TV</title>
+<title>Aguante Taiereee!</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;600;700&family=Barlow+Condensed:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -424,8 +424,7 @@
 
 <header>
   <div class="logo">
-    <span class="logo-main">LibreFútbol</span>
-    <span class="logo-sub">TV</span>
+    <span class="logo-main">Aguante Taiereee!</span>
   </div>
   <div class="header-right">
     <div class="clock" id="clock">00:00</div>
@@ -464,6 +463,7 @@
   <div class="footer-hint">
     <div class="hint-item"><span class="key">D-PAD</span> Navigate</div>
     <div class="hint-item"><span class="key">OK</span> Watch</div>
+    <div class="hint-item"><span class="key">MENU</span> Switch Stream</div>
     <div class="hint-item"><span class="key">BACK</span> Go Back</div>
   </div>
   <div class="footer-source">librefutboltv.su</div>
@@ -540,10 +540,19 @@
 
     if (streamLinks.length === 0) return null;
 
-    const streamUrl = resolveStreamUrl(streamLinks[0].getAttribute('href'));
-    if (!streamUrl) return null;
+    const streams = streamLinks
+      .map(a => {
+        const url = resolveStreamUrl(a.getAttribute('href'));
+        if (!url) return null;
+        // Channel name is the first text node (before any <span>)
+        const name = a.childNodes[0]?.textContent?.trim() || a.textContent.trim();
+        return { url, name };
+      })
+      .filter(Boolean);
 
-    return { league, home, away, time, streamUrl, streamCount: streamLinks.length };
+    if (streams.length === 0) return null;
+
+    return { league, home, away, time, streamUrl: streams[0].url, streams, streamCount: streams.length };
   }
 
   // ── Determine if a game is currently live based on its kickoff time ───────
@@ -566,7 +575,10 @@
     grid.innerHTML = games.map(g => {
       const live = isLive(g.time);
       return `
-        <div class="game-card focusable" tabindex="0" data-url="${encodeURIComponent(g.streamUrl)}">
+        <div class="game-card focusable" tabindex="0"
+             data-url="${encodeURIComponent(g.streamUrl)}"
+             data-streams="${encodeURIComponent(JSON.stringify(g.streams))}"
+             data-game="${escHtml(g.league + ': ' + g.home + ' vs ' + g.away)}">
           ${live ? '<div class="live-indicator"><span class="dot"></span>LIVE</div>' : ''}
           <div class="card-league">${escHtml(g.league)}</div>
           <div class="card-teams">
@@ -583,7 +595,14 @@
 
     grid.querySelectorAll('.game-card').forEach(card => {
       const url = decodeURIComponent(card.dataset.url);
-      const watchNow = () => { if (url) window.location.href = url; };
+      const watchNow = () => {
+        if (!url) return;
+        if (typeof Android !== 'undefined' && Android.setGameStreams) {
+          const streams = JSON.parse(decodeURIComponent(card.dataset.streams || '[]'));
+          Android.setGameStreams(JSON.stringify(streams), card.dataset.game || '');
+        }
+        window.location.href = url;
+      };
       card.addEventListener('click', watchNow);
       card.querySelector('.watch-btn').addEventListener('click', e => {
         e.stopPropagation();
