@@ -188,7 +188,7 @@
   /* ── GAME GRID ── */
   .games-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 16px;
   }
 
@@ -196,7 +196,7 @@
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 6px;
-    padding: 24px;
+    padding: 18px;
     cursor: pointer;
     transition: all 0.18s;
     position: relative;
@@ -258,15 +258,24 @@
   .card-teams {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     margin-bottom: 14px;
+    gap: 0;
   }
 
   .card-team {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 20px;
     letter-spacing: 1.5px;
-    max-width: 130px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .card-team:first-child {
+    text-align: right;
+  }
+
+  .card-team:last-child {
+    text-align: left;
   }
 
   .card-vs {
@@ -274,6 +283,8 @@
     font-size: 14px;
     letter-spacing: 2px;
     color: var(--muted);
+    padding: 0 10px;
+    flex-shrink: 0;
   }
 
   .card-footer {
@@ -427,6 +438,87 @@
   }
 
   .focusable { outline: none; }
+
+  /* ── TALLERES SPECIAL TILE ── */
+  .game-card.talleres {
+    background:
+      repeating-linear-gradient(
+        90deg,
+        #0c1e45 0px,
+        #0c1e45 20px,
+        rgba(255,255,255,0.35) 20px,
+        rgba(255,255,255,0.35) 23px,
+        #0c1e45 23px,
+        #0c1e45 43px
+      );
+    border-color: #3a5aa0;
+    animation: talleres-glow 3s ease-in-out infinite;
+  }
+
+  @keyframes talleres-glow {
+    0%, 100% { box-shadow: 0 0 8px rgba(58,90,160,0.3), 0 0 20px rgba(58,90,160,0.1); }
+    50% { box-shadow: 0 0 16px rgba(100,140,220,0.5), 0 0 40px rgba(80,120,200,0.25); }
+  }
+
+  .game-card.talleres .card-team {
+    color: #ff3040;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+  }
+
+  .game-card.talleres .card-league,
+  .game-card.talleres .card-time,
+  .game-card.talleres .card-vs,
+  .game-card.talleres .card-streams {
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+  }
+
+  .game-card.talleres:focus, .game-card.talleres.focused {
+    border-color: #6a9aff;
+    animation: none;
+    box-shadow: 0 0 0 1px #6a9aff, 0 0 24px rgba(106,154,255,0.4), 0 16px 40px rgba(0,0,0,0.6);
+  }
+
+  /* ── UPCOMING SECTION ── */
+  .upcoming-section {
+    margin-top: 40px;
+  }
+
+  .upcoming-section .section-title {
+    color: var(--muted);
+    font-size: 24px;
+  }
+
+  .upcoming-section .game-card:not(.talleres) {
+    background: transparent;
+    border: 1px dashed #1e2d42;
+    opacity: 0.45;
+    cursor: default;
+    pointer-events: none;
+  }
+
+  .upcoming-section .game-card:not(.talleres):focus,
+  .upcoming-section .game-card:not(.talleres).focused {
+    border-color: var(--muted);
+    background: rgba(15,21,32,0.5);
+    transform: scale(1.02);
+    box-shadow: 0 0 0 1px var(--muted), 0 16px 40px rgba(0,0,0,0.6);
+    opacity: 0.6;
+  }
+
+  .upcoming-section .game-card.talleres {
+    cursor: default;
+    pointer-events: none;
+  }
+
+  .upcoming-section .game-card .watch-btn {
+    display: none;
+  }
+
+  .upcoming-section .game-card .card-streams {
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 2px;
+  }
 </style>
 </head>
 <body>
@@ -458,6 +550,14 @@
       <div class="section-count" id="game-count">—</div>
     </div>
     <div class="games-grid" id="games-grid"></div>
+
+    <div id="upcoming-section" class="upcoming-section" style="display:none">
+      <div class="section-header">
+        <div class="section-title">Upcoming</div>
+        <div class="section-count" id="upcoming-count">—</div>
+      </div>
+      <div class="games-grid" id="upcoming-grid"></div>
+    </div>
   </div>
 
   <div id="error-state" class="error-state" style="display:none">
@@ -557,21 +657,21 @@
     const streamLinks = [...li.querySelectorAll('ul li a')]
       .filter(a => { const h = a.getAttribute('href'); return h && h !== '#'; });
 
-    if (streamLinks.length === 0) return null;
-
     const streams = streamLinks
       .map(a => {
-        const url = resolveStreamUrl(a.getAttribute('href'));
+        const href = a.getAttribute('href');
+        const url = resolveStreamUrl(href);
         if (!url) return null;
         // Channel name is the first text node (before any <span>)
         const name = a.childNodes[0]?.textContent?.trim() || a.textContent.trim();
-        return { url, name };
+        // Mark named channel pages (e.g. /home1/tnt-sports/) that need iframe extraction
+        const needsResolve = url.includes('librefutboltv.su/home1/') && !url.includes('eventos');
+        return { url, name, needsResolve };
       })
       .filter(Boolean);
 
-    if (streams.length === 0) return null;
-
-    return { league, home, away, time, streamUrl: streams[0].url, streams, streamCount: streams.length };
+    const upcoming = streams.length === 0;
+    return { league, home, away, time, streamUrl: upcoming ? '' : streams[0].url, streams, streamCount: streams.length, upcoming };
   }
 
   // ── Determine if a game is currently live based on its kickoff time ───────
@@ -585,34 +685,48 @@
     return elapsed >= 0 && elapsed < 130 * 60 * 1000; // within ~2h10m of kickoff
   }
 
-  // ── Render game tiles ─────────────────────────────────────────────────────
-  function renderGames(games) {
-    const grid = document.getElementById('games-grid');
-    document.getElementById('game-count').textContent =
-      games.length + ' game' + (games.length !== 1 ? 's' : '');
+  // ── Render a single game card HTML ────────────────────────────────────────
+  function gameCardHtml(g) {
+    const live = !g.upcoming && isLive(g.time);
+    // Talleres Córdoba → Talleres
+    if (g.home.includes('Talleres C')) g.home = 'Talleres';
+    if (g.away.includes('Talleres C')) g.away = 'Talleres';
+    const isTalleres = g.home === 'Talleres' || g.away === 'Talleres';
+    return `
+      <div class="game-card focusable${isTalleres ? ' talleres' : ''}" tabindex="0"
+           data-url="${encodeURIComponent(g.streamUrl)}"
+           data-streams="${encodeURIComponent(JSON.stringify(g.streams))}"
+           data-game="${escHtml(g.league + ': ' + g.home + ' vs ' + g.away)}">
+        <div class="card-header">
+          <div class="card-league">${escHtml(g.league)}</div>
+          <div class="card-time">${escHtml(g.time)}${live ? ' <span class="live-indicator"><span class="dot"></span>LIVE</span>' : ''}</div>
+        </div>
+        <div class="card-teams">
+          <div class="card-team">${escHtml(g.home)}</div>
+          <div class="card-vs">VS</div>
+          <div class="card-team">${escHtml(g.away)}</div>
+        </div>
+        <div class="card-footer">
+          <div class="card-streams">${g.upcoming ? 'NO STREAMS YET' : g.streamCount + ' stream' + (g.streamCount !== 1 ? 's' : '')}</div>
+          <button class="watch-btn">▶ Watch</button>
+        </div>
+      </div>`;
+  }
 
-    grid.innerHTML = games.map(g => {
-      const live = isLive(g.time);
-      return `
-        <div class="game-card focusable" tabindex="0"
-             data-url="${encodeURIComponent(g.streamUrl)}"
-             data-streams="${encodeURIComponent(JSON.stringify(g.streams))}"
-             data-game="${escHtml(g.league + ': ' + g.home + ' vs ' + g.away)}">
-          <div class="card-header">
-            <div class="card-league">${escHtml(g.league)}</div>
-            <div class="card-time">${escHtml(g.time)}${live ? ' <span class="live-indicator"><span class="dot"></span>LIVE</span>' : ''}</div>
-          </div>
-          <div class="card-teams">
-            <div class="card-team">${escHtml(g.home)}</div>
-            <div class="card-vs">VS</div>
-            <div class="card-team">${escHtml(g.away)}</div>
-          </div>
-          <div class="card-footer">
-            <div class="card-streams">${g.streamCount} stream${g.streamCount !== 1 ? 's' : ''}</div>
-            <button class="watch-btn">▶ Watch Now</button>
-          </div>
-        </div>`;
-    }).join('');
+  // ── Render game tiles ─────────────────────────────────────────────────────
+  function renderGames(active, upcoming) {
+    const grid = document.getElementById('games-grid');
+    const activeHeader = grid.previousElementSibling; // .section-header
+    if (active.length > 0) {
+      document.getElementById('game-count').textContent =
+        active.length + ' game' + (active.length !== 1 ? 's' : '');
+      grid.innerHTML = active.map(gameCardHtml).join('');
+      activeHeader.style.display = '';
+      grid.style.display = '';
+    } else {
+      activeHeader.style.display = 'none';
+      grid.style.display = 'none';
+    }
 
     grid.querySelectorAll('.game-card').forEach(card => {
       const url = decodeURIComponent(card.dataset.url);
@@ -629,13 +743,23 @@
         e.stopPropagation();
         watchNow();
       });
-      // Flash feedback
       card.addEventListener('click', () => {
         card.style.transition = 'background 0.1s';
         card.style.background = 'rgba(74,144,217,0.08)';
         setTimeout(() => { card.style.background = ''; }, 300);
       });
     });
+
+    // Upcoming section
+    const upSection = document.getElementById('upcoming-section');
+    if (upcoming.length > 0) {
+      document.getElementById('upcoming-count').textContent =
+        upcoming.length + ' game' + (upcoming.length !== 1 ? 's' : '');
+      document.getElementById('upcoming-grid').innerHTML = upcoming.map(gameCardHtml).join('');
+      upSection.style.display = 'block';
+    } else {
+      upSection.style.display = 'none';
+    }
 
     document.getElementById('loading-state').style.display = 'none';
     document.getElementById('content').style.display = 'block';
@@ -661,7 +785,22 @@
 
       if (games.length === 0) throw new Error('No games parsed');
 
-      renderGames(games);
+      // Resolve named channel pages (e.g. /home1/tnt-sports/) to their iframe stream URLs
+      for (const g of games) {
+        for (let i = 0; i < g.streams.length; i++) {
+          if (g.streams[i].needsResolve) {
+            g.streams[i].url = await resolveChannelUrl(g.streams[i].url);
+            g.streams[i].needsResolve = false;
+          }
+        }
+        if (!g.upcoming && g.streams.length > 0) {
+          g.streamUrl = g.streams[0].url;
+        }
+      }
+
+      const active = games.filter(g => !g.upcoming);
+      const upcoming = games.filter(g => g.upcoming);
+      renderGames(active, upcoming);
     } catch (e) {
       console.error('Agenda load failed:', e);
       document.getElementById('loading-state').style.display = 'none';
@@ -676,15 +815,53 @@
     if (items.length > 0) items[0].focus();
   }
 
+  const GRID_COLS = 4;
   document.addEventListener('keydown', e => {
     const items = [...document.querySelectorAll('.focusable')];
     const idx = items.indexOf(document.activeElement);
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+    if (idx < 0) return;
+
+    // Check if current element is inside a game grid
+    const inGrid = document.activeElement.closest('.games-grid');
+
+    if (e.key === 'ArrowRight') {
       e.preventDefault();
       (items[idx + 1] || items[0]).focus();
-    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    } else if (e.key === 'ArrowLeft') {
       e.preventDefault();
       (items[idx - 1] || items[items.length - 1]).focus();
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (inGrid) {
+        // Try to jump down one row within the same grid first
+        const gridCards = [...inGrid.querySelectorAll('.focusable')];
+        const gridIdx = gridCards.indexOf(document.activeElement);
+        if (gridIdx + GRID_COLS < gridCards.length) {
+          gridCards[gridIdx + GRID_COLS].focus();
+        } else {
+          // Move to next focusable after this grid
+          const afterGrid = items[idx + (gridCards.length - gridIdx)];
+          if (afterGrid) afterGrid.focus();
+          else (items[idx + 1] || items[0]).focus();
+        }
+      } else {
+        (items[idx + 1] || items[0]).focus();
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (inGrid) {
+        const gridCards = [...inGrid.querySelectorAll('.focusable')];
+        const gridIdx = gridCards.indexOf(document.activeElement);
+        if (gridIdx - GRID_COLS >= 0) {
+          gridCards[gridIdx - GRID_COLS].focus();
+        } else {
+          // Move to focusable before this grid
+          const globalGridStart = items.indexOf(gridCards[0]);
+          if (globalGridStart > 0) items[globalGridStart - 1].focus();
+        }
+      } else {
+        (items[idx - 1] || items[items.length - 1]).focus();
+      }
     } else if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       document.activeElement.click();
@@ -697,6 +874,24 @@
   // ── Helpers ───────────────────────────────────────────────────────────────
   function escHtml(str) {
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // ── Resolve named channel pages to their iframe stream URL ─────────────
+  async function resolveChannelUrl(url) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) return url;
+      const html = await res.text();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const iframe = doc.querySelector('iframe[src]');
+      if (iframe) {
+        const src = iframe.getAttribute('src');
+        if (src && src.startsWith('http')) return src;
+      }
+    } catch (e) {
+      console.error('Channel resolve failed:', e);
+    }
+    return url;
   }
 
   // ── Boot ──────────────────────────────────────────────────────────────────
