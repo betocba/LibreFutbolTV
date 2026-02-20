@@ -2,6 +2,7 @@ package com.librefutbol.tv;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Message;
@@ -31,6 +32,7 @@ import java.util.Set;
 public class MainActivity extends Activity {
 
     private WebView webView;
+    private MediaPlayer introPlayer;
     private static final String HOME_URL = "file:///android_asset/www/index.html";
 
     // ── Multi-stream picker state ────────────────────────────────────────────
@@ -167,6 +169,15 @@ public class MainActivity extends Activity {
         webView = findViewById(R.id.webview);
         setupWebView();
         webView.loadUrl(HOME_URL);
+
+        introPlayer = MediaPlayer.create(this, R.raw.aguante_talleres);
+        if (introPlayer != null) {
+            introPlayer.setOnCompletionListener(mp -> {
+                mp.release();
+                introPlayer = null;
+            });
+            introPlayer.start();
+        }
     }
 
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
@@ -400,19 +411,19 @@ public class MainActivity extends Activity {
             +   "justify-content:center;font-family:sans-serif;';"
             // Panel
             + "var panel=document.createElement('div');"
-            + "panel.style.cssText='background:#141e14;border:2px solid #00e676;"
+            + "panel.style.cssText='background:#141c28;border:2px solid #ffffff;"
             +   "border-radius:8px;padding:32px 40px;min-width:420px;max-width:520px;"
-            +   "box-shadow:0 0 60px rgba(0,230,118,0.15);';"
+            +   "box-shadow:0 0 60px rgba(74,144,217,0.15);';"
             // Title
             + "var title=document.createElement('div');"
             + "title.textContent=" + escapeJsString(currentGameName) + ";"
-            + "title.style.cssText='font-size:22px;color:#e8f5e9;font-weight:700;"
+            + "title.style.cssText='font-size:22px;color:#e8eef5;font-weight:700;"
             +   "letter-spacing:2px;margin-bottom:8px;text-align:center;';"
             + "panel.appendChild(title);"
             // Subtitle
             + "var sub=document.createElement('div');"
             + "sub.textContent='Select Stream';"
-            + "sub.style.cssText='font-size:13px;color:#6a8f6a;letter-spacing:3px;"
+            + "sub.style.cssText='font-size:13px;color:#6a8faa;letter-spacing:3px;"
             +   "text-transform:uppercase;text-align:center;margin-bottom:24px;';"
             + "panel.appendChild(sub);"
             // Stream list
@@ -425,13 +436,13 @@ public class MainActivity extends Activity {
             +   "btn.textContent=labels[i];"
             +   "btn.dataset.idx=i;"
             +   "btn.style.cssText='padding:14px 24px;margin:4px 0;border-radius:4px;"
-            +     "font-size:18px;color:#e8f5e9;cursor:pointer;border:2px solid transparent;"
+            +     "font-size:18px;color:#e8eef5;cursor:pointer;border:2px solid transparent;"
             +     "transition:all 0.15s;letter-spacing:1px;position:relative;';"
             +   "if(i===active){"
-            +     "btn.style.color='#00e676';"
+            +     "btn.style.color='#ffffff';"
             +     "var dot=document.createElement('span');"
             +     "dot.textContent='\\u25CF NOW PLAYING';"
-            +     "dot.style.cssText='font-size:10px;color:#00e676;letter-spacing:2px;"
+            +     "dot.style.cssText='font-size:10px;color:#ffffff;letter-spacing:2px;"
             +       "margin-left:12px;';"
             +     "btn.appendChild(dot);"
             +   "}"
@@ -441,7 +452,7 @@ public class MainActivity extends Activity {
             // Hint
             + "var hint=document.createElement('div');"
             + "hint.textContent='\\u2191\\u2193 Navigate  \\u23CE Select  BACK Close';"
-            + "hint.style.cssText='font-size:11px;color:#6a8f6a;letter-spacing:2px;"
+            + "hint.style.cssText='font-size:11px;color:#6a8faa;letter-spacing:2px;"
             +   "text-align:center;margin-top:24px;';"
             + "panel.appendChild(hint);"
             + "bg.appendChild(panel);"
@@ -449,8 +460,8 @@ public class MainActivity extends Activity {
             // Focus styling
             + "function updateFocus(){"
             +   "for(var i=0;i<btns.length;i++){"
-            +     "btns[i].style.background=i===focused?'rgba(0,230,118,0.15)':'transparent';"
-            +     "btns[i].style.borderColor=i===focused?'#00e676':'transparent';"
+            +     "btns[i].style.background=i===focused?'rgba(74,144,217,0.15)':'transparent';"
+            +     "btns[i].style.borderColor=i===focused?'#ffffff':'transparent';"
             +   "}"
             + "}"
             + "updateFocus();"
@@ -560,6 +571,7 @@ public class MainActivity extends Activity {
         wasPaused = true;
     }
     @Override protected void onDestroy() {
+        if (introPlayer != null) { introPlayer.release(); introPlayer = null; }
         if (webView != null) webView.destroy();
         super.onDestroy();
     }
