@@ -519,6 +519,48 @@
     color: var(--muted);
     letter-spacing: 2px;
   }
+
+  /* ── CHANNEL CARDS ── */
+  .channel-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px;
+    cursor: pointer;
+    transition: all 0.18s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .channel-card:focus, .channel-card.focused {
+    outline: none;
+    border-color: var(--accent);
+    background: var(--card-hover);
+    transform: scale(1.02);
+    box-shadow: 0 0 0 1px var(--accent), 0 16px 40px rgba(0,0,0,0.6);
+    z-index: 2;
+  }
+
+  .channel-logo {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.05);
+  }
+
+  .channel-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 1.5px;
+    text-align: center;
+  }
+
+  .channel-card .watch-btn {
+    margin-top: auto;
+  }
 </style>
 </head>
 <body>
@@ -534,7 +576,8 @@
 </header>
 
 <nav>
-  <div class="nav-tab active focusable" tabindex="0">⚽ Today</div>
+  <div class="nav-tab active focusable" tabindex="0" data-tab="today">⚽ Today</div>
+  <div class="nav-tab focusable" tabindex="0" data-tab="channels">📺 Channels</div>
 </nav>
 
 <main>
@@ -566,6 +609,26 @@
     <button class="retry-btn focusable" tabindex="0" id="retry-btn">↺ Try Again</button>
   </div>
 
+  <!-- Channels tab content -->
+  <div id="channels-content" style="display:none">
+    <div id="channels-loading" class="loading-state">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Loading channels...</div>
+    </div>
+    <div id="channels-loaded" style="display:none">
+      <div class="section-header">
+        <div class="section-title">Live Channels</div>
+        <div class="section-count" id="channel-count">—</div>
+      </div>
+      <div class="games-grid" id="channels-grid"></div>
+    </div>
+    <div id="channels-error" class="error-state" style="display:none">
+      <div class="error-icon">📺</div>
+      <div class="error-text">Could not load channels</div>
+      <button class="retry-btn focusable" tabindex="0" id="channels-retry-btn">↺ Try Again</button>
+    </div>
+  </div>
+
 </main>
 
 <footer>
@@ -590,15 +653,15 @@
   updateClock();
   setInterval(updateClock, 10000);
 
-  // ── Convert Argentina time (UTC-3) to local time ────────────────────────
-  function argToLocal(timeStr) {
+  // ── Convert server time (UTC+1) to device local time ───────────────────
+  const SERVER_OFFSET = 60; // server times are UTC+1 (60 min ahead of UTC)
+  function serverToLocal(timeStr) {
     if (!timeStr) return '';
     const [h, m] = timeStr.split(':').map(Number);
     if (isNaN(h) || isNaN(m)) return timeStr;
-    const now = new Date();
-    // Build a Date in UTC using Argentina offset (UTC-3 → add 3 hours to get UTC)
-    const utc = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), h + 3, m));
-    return utc.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    let total = h * 60 + m - SERVER_OFFSET - new Date().getTimezoneOffset();
+    total = ((total % 1440) + 1440) % 1440;
+    return String(Math.floor(total / 60)).padStart(2, '0') + ':' + String(total % 60).padStart(2, '0');
   }
 
   // ── Stream URL decoding ───────────────────────────────────────────────────
@@ -636,7 +699,7 @@
     // Time is inside <span class="t"> — extract and convert from Argentina (UTC-3) to local
     const timeSpan = titleEl.querySelector('.t');
     const timeRaw = timeSpan ? timeSpan.textContent.trim() : '';
-    const time = argToLocal(timeRaw);
+    const time = serverToLocal(timeRaw);
     const text = titleEl.textContent.replace(timeRaw, '').trim();
 
     // Split "League: Team A vs Team B"
@@ -810,14 +873,20 @@
   }
 
   // ── D-pad / keyboard navigation ───────────────────────────────────────────
+  function getVisibleFocusables() {
+    return [...document.querySelectorAll('.focusable')].filter(el => {
+      return el.offsetParent !== null || el.style.display !== 'none';
+    });
+  }
+
   function initFocus() {
-    const items = [...document.querySelectorAll('.focusable')];
+    const items = getVisibleFocusables();
     if (items.length > 0) items[0].focus();
   }
 
   const GRID_COLS = 4;
   document.addEventListener('keydown', e => {
-    const items = [...document.querySelectorAll('.focusable')];
+    const items = getVisibleFocusables();
     const idx = items.indexOf(document.activeElement);
     if (idx < 0) return;
 
@@ -893,6 +962,152 @@
     }
     return url;
   }
+
+  // ── Tab switching ─────────────────────────────────────────────────────────
+  const todaySections = ['loading-state', 'content', 'error-state'];
+  const channelsSections = ['channels-content'];
+  let activeTab = 'today';
+  let channelsLoaded = false;
+
+  document.querySelectorAll('.nav-tab').forEach(tab => {
+    tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+  });
+
+  function switchTab(tabName) {
+    if (tabName === activeTab) return;
+    activeTab = tabName;
+    document.querySelectorAll('.nav-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.tab === tabName);
+    });
+    if (tabName === 'today') {
+      todaySections.forEach(id => {
+        const el = document.getElementById(id);
+        // Restore visibility based on current state
+        if (id === 'loading-state') el.style.display = el._wasVisible ? 'flex' : 'none';
+        else if (id === 'content') el.style.display = el._wasVisible ? 'block' : 'none';
+        else if (id === 'error-state') el.style.display = el._wasVisible ? 'flex' : 'none';
+      });
+      document.getElementById('channels-content').style.display = 'none';
+    } else {
+      // Save today's section visibility then hide
+      todaySections.forEach(id => {
+        const el = document.getElementById(id);
+        el._wasVisible = el.style.display !== 'none';
+        el.style.display = 'none';
+      });
+      document.getElementById('channels-content').style.display = 'block';
+      if (!channelsLoaded) loadChannels();
+    }
+    initFocus();
+  }
+
+  // ── Channels fetch & render ──────────────────────────────────────────────
+  const CHANNELS_URL = 'https://librefutboltv.su';
+
+  async function loadChannels() {
+    document.getElementById('channels-loading').style.display = 'flex';
+    document.getElementById('channels-loaded').style.display = 'none';
+    document.getElementById('channels-error').style.display = 'none';
+
+    try {
+      const res = await fetch(CHANNELS_URL);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const html = await res.text();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+
+      // Find all "Ver Canal" links and extract surrounding channel info
+      const verLinks = [...doc.querySelectorAll('a')].filter(a =>
+        a.textContent.trim().toLowerCase().includes('ver canal')
+      );
+
+      const channels = [];
+      for (const link of verLinks) {
+        const href = link.getAttribute('href');
+        if (!href || href === '#') continue;
+
+        // Walk up to find the containing block
+        const container = link.closest('div, td, li, section, article') || link.parentElement;
+        if (!container) continue;
+
+        // Find image logo nearby
+        const img = container.querySelector('img');
+        const logo = img ? img.getAttribute('src') : '';
+
+        // Extract channel name from bold text or strong tag
+        const bold = container.querySelector('strong, b');
+        let name = '';
+        if (bold) {
+          name = bold.textContent.trim();
+        } else {
+          // Fallback: derive from URL slug
+          const slug = href.split('/').filter(Boolean).pop() || '';
+          name = slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        }
+
+        if (name) channels.push({ name, logo, url: href });
+      }
+
+      if (channels.length === 0) throw new Error('No channels found');
+
+      // Pre-resolve all channel URLs to their stream URLs
+      for (const ch of channels) {
+        ch.streamUrl = await resolveChannelUrl(ch.url);
+      }
+
+      renderChannels(channels);
+      channelsLoaded = true;
+    } catch (e) {
+      console.error('Channels load failed:', e);
+      document.getElementById('channels-loading').style.display = 'none';
+      document.getElementById('channels-error').style.display = 'flex';
+      initFocus();
+    }
+  }
+
+  function renderChannels(channels) {
+    const grid = document.getElementById('channels-grid');
+    document.getElementById('channel-count').textContent =
+      channels.length + ' channel' + (channels.length !== 1 ? 's' : '');
+
+    grid.innerHTML = channels.map(ch => `
+      <div class="channel-card focusable" tabindex="0"
+           data-url="${encodeURIComponent(ch.streamUrl)}"
+           data-streams="${encodeURIComponent(JSON.stringify([{ url: ch.streamUrl, name: ch.name }]))}"
+           data-game="${escHtml(ch.name)}">
+        ${ch.logo ? `<img class="channel-logo" src="${escHtml(ch.logo)}" alt="${escHtml(ch.name)}">` : ''}
+        <div class="channel-name">${escHtml(ch.name)}</div>
+        <button class="watch-btn">▶ Watch</button>
+      </div>
+    `).join('');
+
+    grid.querySelectorAll('.channel-card').forEach(card => {
+      const url = decodeURIComponent(card.dataset.url);
+      const watchNow = () => {
+        if (!url) return;
+        if (typeof Android !== 'undefined' && Android.setGameStreams) {
+          const streams = JSON.parse(decodeURIComponent(card.dataset.streams || '[]'));
+          Android.setGameStreams(JSON.stringify(streams), card.dataset.game || '');
+        }
+        window.location.href = url;
+      };
+      card.addEventListener('click', watchNow);
+      card.querySelector('.watch-btn').addEventListener('click', e => {
+        e.stopPropagation();
+        watchNow();
+      });
+      card.addEventListener('click', () => {
+        card.style.transition = 'background 0.1s';
+        card.style.background = 'rgba(74,144,217,0.08)';
+        setTimeout(() => { card.style.background = ''; }, 300);
+      });
+    });
+
+    document.getElementById('channels-loading').style.display = 'none';
+    document.getElementById('channels-loaded').style.display = 'block';
+    initFocus();
+  }
+
+  document.getElementById('channels-retry-btn').addEventListener('click', loadChannels);
 
   // ── Boot ──────────────────────────────────────────────────────────────────
   loadAgenda();
