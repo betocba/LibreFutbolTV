@@ -875,7 +875,7 @@
   // ── D-pad / keyboard navigation ───────────────────────────────────────────
   function getVisibleFocusables() {
     return [...document.querySelectorAll('.focusable')].filter(el => {
-      return el.offsetParent !== null || el.style.display !== 'none';
+      return el.offsetParent !== null;
     });
   }
 
@@ -998,7 +998,12 @@
       document.getElementById('channels-content').style.display = 'block';
       if (!channelsLoaded) loadChannels();
     }
-    initFocus();
+    // Focus first item in the active tab's content (skip nav tabs)
+    const firstContent = document.querySelector(
+      tabName === 'channels' ? '#channels-content .focusable' : '#content .focusable, #error-state .focusable'
+    );
+    if (firstContent) firstContent.focus();
+    else initFocus();
   }
 
   // ── Channels fetch & render ──────────────────────────────────────────────
