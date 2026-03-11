@@ -561,6 +561,54 @@
   .channel-card .watch-btn {
     margin-top: auto;
   }
+
+  /* ── SOURCE SELECTOR ── */
+  .source-bar {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 60px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(15,21,32,0.5);
+  }
+
+  .source-bar-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-right: 4px;
+  }
+
+  .source-pill {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .source-pill.active {
+    color: var(--text);
+    background: var(--card-hover);
+    border-color: var(--accent);
+  }
+
+  .source-pill:focus, .source-pill:hover {
+    outline: none;
+    color: var(--text);
+    border-color: var(--accent);
+    background: rgba(74,144,217,0.08);
+  }
 </style>
 </head>
 <body>
@@ -579,6 +627,10 @@
   <div class="nav-tab active focusable" tabindex="0" data-tab="today">⚽ Today</div>
   <div class="nav-tab focusable" tabindex="0" data-tab="channels">📺 Channels</div>
 </nav>
+
+<div class="source-bar" id="source-bar">
+  <span class="source-bar-label">Source:</span>
+</div>
 
 <main>
 
@@ -638,11 +690,59 @@
     <div class="hint-item"><span class="key">MENU</span> Switch Stream</div>
     <div class="hint-item"><span class="key">BACK</span> Go Back</div>
   </div>
-  <div class="footer-source">librefutboltv.su</div>
+  <div class="footer-source">futbollibretv.su</div>
 </footer>
 
 <script>
-  const AGENDA_URL = 'https://librefutboltv.su/home1/agenda/';
+  // ── Agenda sources ──────────────────────────────────────────────────────
+  const SOURCES = [
+    {
+      id: 'futbollibretv',
+      name: 'Futbol Libre TV',
+      agendaUrl: 'https://futbollibretv.su/agenda/',
+      eventosBase: 'https://futbollibretv.su/eventos/',
+      referer: 'https://futbollibretv.su/',
+      domain: 'futbollibretv.su',
+      serverOffset: 60, // UTC+1
+    },
+    {
+      id: 'alpalotv',
+      name: 'Alpalo TV',
+      agendaUrl: 'https://alpalotv.com/agenda.html',
+      eventosBase: 'https://alpalotv.com/embed/eventos/',
+      referer: 'https://alpalotv.com/',
+      domain: 'alpalotv.com',
+      serverOffset: 60, // UTC+1
+    },
+  ];
+  let activeSource = SOURCES[0];
+
+  // ── Render source pills ────────────────────────────────────────────────
+  (function renderSourcePills() {
+    const bar = document.getElementById('source-bar');
+    SOURCES.forEach(src => {
+      const pill = document.createElement('div');
+      pill.className = 'source-pill focusable' + (src.id === activeSource.id ? ' active' : '');
+      pill.tabIndex = 0;
+      pill.dataset.sourceId = src.id;
+      pill.textContent = src.name;
+      pill.addEventListener('click', () => selectSource(src.id));
+      bar.appendChild(pill);
+    });
+  })();
+
+  function selectSource(sourceId) {
+    if (activeSource.id === sourceId) return;
+    activeSource = SOURCES.find(s => s.id === sourceId);
+    document.querySelectorAll('.source-pill').forEach(p => {
+      p.classList.toggle('active', p.dataset.sourceId === sourceId);
+    });
+    document.querySelector('.footer-source').textContent = activeSource.domain;
+    if (typeof Android !== 'undefined' && Android.setActiveReferer) {
+      Android.setActiveReferer(activeSource.referer);
+    }
+    loadAgenda();
+  }
 
   // ── Clock ────────────────────────────────────────────────────────────────
   function updateClock() {
@@ -653,33 +753,28 @@
   updateClock();
   setInterval(updateClock, 10000);
 
-  // ── Convert server time (UTC+1) to device local time ───────────────────
-  const SERVER_OFFSET = 60; // server times are UTC+1 (60 min ahead of UTC)
+  // ── Convert server time to device local time ───────────────────────────
   function serverToLocal(timeStr) {
     if (!timeStr) return '';
     const [h, m] = timeStr.split(':').map(Number);
     if (isNaN(h) || isNaN(m)) return timeStr;
-    let total = h * 60 + m - SERVER_OFFSET - new Date().getTimezoneOffset();
+    let total = h * 60 + m - activeSource.serverOffset - new Date().getTimezoneOffset();
     total = ((total % 1440) + 1440) % 1440;
     return String(Math.floor(total / 60)).padStart(2, '0') + ':' + String(total % 60).padStart(2, '0');
   }
 
   // ── Stream URL decoding ───────────────────────────────────────────────────
-  // Resolve a stream link href to the direct stream URL.
-  // Stream links on the agenda page are relative query strings like ?r=BASE64,
-  // where BASE64 decodes to the actual stream URL (e.g. https://latamvidz1.com/...).
-  // We decode it here so the WebView navigates directly to the stream player
-  // rather than loading the eventos iframe wrapper, enabling autoplay injection.
-  const EVENTOS_BASE = 'https://librefutboltv.su/home1/eventos/';
   function resolveStreamUrl(href) {
     if (!href) return null;
     try {
-      const url = new URL(href, EVENTOS_BASE);
+      const url = new URL(href, activeSource.eventosBase);
       const r = url.searchParams.get('r');
       if (r) {
         try {
-          const decoded = atob(r);
-          // Validate it looks like a URL
+          // Convert URL-safe base64 to standard base64 and fix padding
+          const standard = r.replace(/-/g, '+').replace(/_/g, '/');
+          const padded = standard + '==='.slice(0, (4 - standard.length % 4) % 4);
+          const decoded = atob(padded);
           if (decoded.startsWith('http')) return decoded;
         } catch (e) {
           // Not valid base64 — fall through to full URL
@@ -728,7 +823,7 @@
         // Channel name is the first text node (before any <span>)
         const name = a.childNodes[0]?.textContent?.trim() || a.textContent.trim();
         // Mark named channel pages (e.g. /home1/tnt-sports/) that need iframe extraction
-        const needsResolve = url.includes('librefutboltv.su/home1/') && !url.includes('eventos');
+        const needsResolve = url.includes(activeSource.domain + '/') && !url.includes('eventos');
         return { url, name, needsResolve };
       })
       .filter(Boolean);
@@ -795,9 +890,12 @@
       const url = decodeURIComponent(card.dataset.url);
       const watchNow = () => {
         if (!url) return;
-        if (typeof Android !== 'undefined' && Android.setGameStreams) {
-          const streams = JSON.parse(decodeURIComponent(card.dataset.streams || '[]'));
-          Android.setGameStreams(JSON.stringify(streams), card.dataset.game || '');
+        if (typeof Android !== 'undefined') {
+          if (Android.setActiveReferer) Android.setActiveReferer(activeSource.referer);
+          if (Android.setGameStreams) {
+            const streams = JSON.parse(decodeURIComponent(card.dataset.streams || '[]'));
+            Android.setGameStreams(JSON.stringify(streams), card.dataset.game || '');
+          }
         }
         window.location.href = url;
       };
@@ -836,7 +934,7 @@
     document.getElementById('error-state').style.display = 'none';
 
     try {
-      const res = await fetch(AGENDA_URL);
+      const res = await fetch(activeSource.agendaUrl);
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const html = await res.text();
 
@@ -980,16 +1078,16 @@
       t.classList.toggle('active', t.dataset.tab === tabName);
     });
     if (tabName === 'today') {
+      document.getElementById('source-bar').style.display = 'flex';
       todaySections.forEach(id => {
         const el = document.getElementById(id);
-        // Restore visibility based on current state
         if (id === 'loading-state') el.style.display = el._wasVisible ? 'flex' : 'none';
         else if (id === 'content') el.style.display = el._wasVisible ? 'block' : 'none';
         else if (id === 'error-state') el.style.display = el._wasVisible ? 'flex' : 'none';
       });
       document.getElementById('channels-content').style.display = 'none';
     } else {
-      // Save today's section visibility then hide
+      document.getElementById('source-bar').style.display = 'none';
       todaySections.forEach(id => {
         const el = document.getElementById(id);
         el._wasVisible = el.style.display !== 'none';
@@ -1007,7 +1105,7 @@
   }
 
   // ── Channels fetch & render ──────────────────────────────────────────────
-  const CHANNELS_URL = 'https://librefutboltv.su';
+  const CHANNELS_URL = 'https://futbollibretv.su';
 
   async function loadChannels() {
     document.getElementById('channels-loading').style.display = 'flex';

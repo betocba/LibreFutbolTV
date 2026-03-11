@@ -41,6 +41,7 @@ public class MainActivity extends Activity {
     private String currentGameName = "";
     private int currentStreamIndex = 0;
     private boolean pickerVisible = false;
+    private volatile String activeReferer = "https://futbollibretv.su/";
 
     // ── Blocked domains (network-request level) ───────────────────────────────
     private static final Set<String> BLOCKED_DOMAINS = new HashSet<>(Arrays.asList(
@@ -227,11 +228,12 @@ public class MainActivity extends Activity {
                 boolean onHomePage = currentUrl == null
                         || currentUrl.startsWith("file:///");
 
-                // librefutboltv.su is the agenda/eventos site — it legitimately
-                // redirects to external stream domains, so never lock it down.
+                // Agenda/eventos sites legitimately redirect to external stream
+                // domains, so never lock them down.
                 String currentHost = getHost(currentUrl);
                 boolean onAgendaSite = currentHost != null
-                        && currentHost.contains("librefutboltv.su");
+                        && (currentHost.contains("futbollibretv.su")
+                            || currentHost.contains("alpalotv.com"));
 
                 if (!onHomePage && !onAgendaSite) {
                     // ── Stream-page lockdown ─────────────────────────────
@@ -251,7 +253,7 @@ public class MainActivity extends Activity {
                     // Navigation from home = user picked a stream.
                     // Add Referer so stream servers (which check it) accept the request.
                     Map<String, String> headers = new HashMap<>();
-                    headers.put("Referer", "https://librefutboltv.su/");
+                    headers.put("Referer", activeReferer);
                     view.loadUrl(target.toString(), headers);
                 } else {
                     view.loadUrl(target.toString());
@@ -269,7 +271,8 @@ public class MainActivity extends Activity {
                 if (url != null && !url.startsWith("file:///")) {
                     String host = getHost(url);
                     boolean isAgendaSite = host != null
-                            && host.contains("librefutboltv.su");
+                            && (host.contains("futbollibretv.su")
+                                || host.contains("alpalotv.com"));
                     if (!isAgendaSite) {
                         view.evaluateJavascript(AUTOPLAY_JS, null);
                     }
@@ -345,6 +348,13 @@ public class MainActivity extends Activity {
 
     private class StreamBridge {
         @JavascriptInterface
+        public void setActiveReferer(String referer) {
+            if (referer != null && referer.startsWith("http")) {
+                activeReferer = referer;
+            }
+        }
+
+        @JavascriptInterface
         public void setGameStreams(String jsonStreams, String gameName) {
             try {
                 JSONArray arr = new JSONArray(jsonStreams);
@@ -375,7 +385,7 @@ public class MainActivity extends Activity {
             final String url = currentStreamUrls[index];
             runOnUiThread(() -> {
                 Map<String, String> headers = new HashMap<>();
-                headers.put("Referer", "https://librefutboltv.su/");
+                headers.put("Referer", activeReferer);
                 webView.loadUrl(url, headers);
             });
         }
